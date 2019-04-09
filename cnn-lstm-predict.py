@@ -33,7 +33,9 @@ def clean_doc(doc, vocab):
 	# filter out tokens not in vocab
 	tokens = [w for w in tokens if w in vocab]
 	tokens = ' '.join(tokens)
-	return tokens
+	documents = list()
+	documents.append(tokens)
+	return documents
  
 
 vocab_filename = 'vocab.txt'
@@ -45,6 +47,8 @@ ip_text = input("Enter a sentance to check sentiment using cnn-lstm: ")
 print("input sentance is " + ip_text + "!")
 # pre-process input
 tokens = clean_doc(ip_text, vocab)
+with open("train.txt", "w") as text_file:
+    for p in tokens: text_file.write(" %s \n" % p)
 
 
 # # create the tokenizer
@@ -64,6 +68,7 @@ Xtrain = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
 vocab_size = len(tokenizer.word_index) + 1
 print('------------------------Loading model---------------------------------------')
 model = load_model("cnn-lstm_model.h5")
-probability = (model.predict(Xtrain)[0][0] > 0.5).astype(int)
+probability = model.predict(array(Xtrain))
+# probability = (model.predict(Xtrain)[0][0] > 0.5).astype(int)
 print('---------------Prediction value is...------------------')
 print(probability)

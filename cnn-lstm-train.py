@@ -4,7 +4,7 @@ from numpy import array,shape
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense,BatchNormalization
 from keras.layers import Flatten
 from keras.layers import Dropout, Activation
 from keras.layers import LSTM
@@ -65,7 +65,7 @@ vocab = set(vocab)
 positive_docs = process_docs('txt_sentoken/pos', vocab, True)
 negative_docs = process_docs('txt_sentoken/neg', vocab, True)
 train_docs = negative_docs + positive_docs
- 
+
 # create the tokenizer
 tokenizer = Tokenizer()
 # fit the tokenizer on the documents
@@ -78,7 +78,6 @@ max_length = max([len(s.split()) for s in train_docs])
 Xtrain = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
 # define training labels
 ytrain = array([0 for _ in range(900)] + [1 for _ in range(900)])
- 
 # load all test reviews
 positive_docs = process_docs('txt_sentoken/pos', vocab, False)
 negative_docs = process_docs('txt_sentoken/neg', vocab, False)
@@ -87,6 +86,9 @@ test_docs = negative_docs + positive_docs
 encoded_docs = tokenizer.texts_to_sequences(test_docs)
 # pad sequences
 Xtest = pad_sequences(encoded_docs, maxlen=max_length, padding='post')
+with open("sentiment.txt", "w") as text_file:
+	for p in test_docs: text_file.write("%s \n" % p)
+
 # define test labels
 ytest = array([0 for _ in range(100)] + [1 for _ in range(100)])
  
@@ -99,10 +101,11 @@ print('Build model...')
 # define model
 model = Sequential()
 model.add(Embedding(vocab_size, 100, input_length=max_length))
-model.add(Dropout(0.2))
 model.add(Conv1D(filters=32, kernel_size=8, activation='relu'))
 model.add(MaxPooling1D(pool_size=2))
 model.add(LSTM(100))
+model.add(BatchNormalization())
+model.add(Dropout(0.5))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
