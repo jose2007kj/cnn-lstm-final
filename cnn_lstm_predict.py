@@ -107,13 +107,6 @@ Xtrain = encode_docs(tokenizer, max_length, train_docs)
 Xtest = encode_docs(tokenizer, max_length, test_docs)
 # load the model
 model = load_model('worst_case.h5')
-# evaluate model on training dataset
-_, acc = model.evaluate(Xtrain, ytrain, verbose=0)
-print('Train Accuracy: %.2f' % (acc*100))
-# evaluate model on test dataset
-_, acc = model.evaluate(Xtest, ytest, verbose=0)
-print('Test Accuracy: %.2f' % (acc*100))
-
 # test positive text
 text = input("Enter a sentance to check sentiment using cnn-lstm: ")
 print("input sentance is " + text + "!")
