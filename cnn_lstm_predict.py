@@ -106,7 +106,7 @@ print('Maximum length: %d' % max_length)
 Xtrain = encode_docs(tokenizer, max_length, train_docs)
 Xtest = encode_docs(tokenizer, max_length, test_docs)
 # load the model
-model = load_model('worst_case.h5')
+model = load_model('cnn_model.h5')
 # test positive text
 text = input("Enter a sentance to check sentiment using cnn-lstm: ")
 print("input sentance is " + text + "!")
