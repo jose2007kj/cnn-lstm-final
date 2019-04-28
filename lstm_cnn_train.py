@@ -4,7 +4,7 @@ from os import listdir
 from numpy import array
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-# from keras.utils.vis_utils import plot_model
+import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Flatten
@@ -14,7 +14,7 @@ from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
 from keras.layers import Dense,BatchNormalization
 from keras.layers import Dropout, Activation
-
+from keras import backend as K
 # load doc into memory
 def load_doc(filename):
 	# open the file as read only
@@ -57,7 +57,16 @@ def process_docs(directory, vocab, is_train):
 		# add to list
 		documents.append(tokens)
 	return documents
-
+def get_train_data():
+	train_text=list()
+	train_senti=list()
+	for line in open("rain.txt", 'r'):
+		d = line.split('\t')
+		text = d[0].strip()
+		senti = d[1].strip()
+		train_text.append(text)
+		train_senti.append(senti)
+	return train_text, train_senti
 # load and clean a dataset
 def load_clean_dataset(vocab, is_train):
 	# load documents
@@ -107,7 +116,8 @@ vocab_filename = 'vocab.txt'
 vocab = load_doc(vocab_filename)
 vocab = set(vocab.split())
 # load training data
-train_docs, ytrain = load_clean_dataset(vocab, True)
+train_docs, ytrain = get_train_data()
+# test_docs, ytest = load_clean_dataset(vocab, False)
 # create the tokenizer
 tokenizer = create_tokenizer(train_docs)
 # define vocabulary size
@@ -118,11 +128,36 @@ max_length = max([len(s.split()) for s in train_docs])
 print('Maximum length: %d' % max_length)
 # encode data
 Xtrain = encode_docs(tokenizer, max_length, train_docs)
+
+# tokenizer = create_tokenizer(test_docs)
+# Xtest = encode_docs(tokenizer, max_length, test_docs)
+
 # define model
 model = define_model(vocab_size, max_length)
 # fit network
-model.fit(Xtrain, ytrain, epochs=10, verbose=2)
+history = model.fit(Xtrain, ytrain, validation_split=0.25, epochs=10, verbose=2)
 # save the model
 model.save('lstm_cnn_model.h5')
+
+# Plot training & validation accuracy values
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.savefig('acc_result_lstm_cnn.png')
+plt.clf()
+
+# Plot training & validation loss values
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.savefig('loss_result_lstm_cnn.png')
+plt.clf()
+K.clear_session()
 
 

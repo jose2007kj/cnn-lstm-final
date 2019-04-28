@@ -4,7 +4,7 @@ from os import listdir
 from numpy import array
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-# from keras.utils.vis_utils import plot_model
+import matplotlib.pyplot as plt
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Flatten
@@ -14,6 +14,8 @@ from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
 from keras.layers import Dense,BatchNormalization
 from keras.layers import Dropout, Activation
+from keras import backend as K
+
 # load doc into memory
 def load_doc(filename):
 	# open the file as read only
@@ -61,12 +63,49 @@ def process_docs(directory, vocab, is_train):
 def load_clean_dataset(vocab, is_train):
 	# load documents
 	neg = process_docs('txt_sentoken/neg', vocab, is_train)
+	# if is_train:
+	# 	with open("negative_combined.txt", "w") as text_file:
+	# 		for line in neg:
+	# 			text_file.write(line+"\t"+str(0)+"\n")
+
+
 	pos = process_docs('txt_sentoken/pos', vocab, is_train)
+	# if is_train:
+	# 	with open("positive_combined.txt", "w") as text_file:
+	# 		for line in pos:
+	# 			text_file.write(line+"\t"+str(1)+"\n")
+	# for line in open(dataFile, 'r'):
+	# 	d = line.split('\t')
 	docs = neg + pos
+	# combiiininf file and writing to a file
+	# with open("combined_train.txt", "w") as text_file:
+	# 	with open("positive_combined.txt") as file1, open("negative_combined.txt") as file2:
+	# 		for line1, line2 in zip(file1, file2):
+	# 			text_file.write(line2)
+	# 			text_file.write(line1)
+
 	# prepare labels
 	labels = array([0 for _ in range(len(neg))] + [1 for _ in range(len(pos))])
-	return docs, labels
+	train_text=list()
+	train_senti=list()
+	for line in open("rain.txt", 'r'):
+		d = line.split('\t')
+		text = d[0].strip()
+		senti = d[1].strip()
+		train_text.append(text)
+		train_senti.append(senti)
+	return train_text, train_senti
 
+def get_train_data():
+	train_text=list()
+	train_senti=list()
+	for line in open("rain.txt", 'r'):
+		d = line.split('\t')
+		text = d[0].strip()
+		senti = d[1].strip()
+		train_text.append(text)
+		train_senti.append(senti)
+	return train_text, train_senti
 # fit a tokenizer
 def create_tokenizer(lines):
 	tokenizer = Tokenizer()
@@ -115,7 +154,9 @@ vocab_filename = 'vocab.txt'
 vocab = load_doc(vocab_filename)
 vocab = set(vocab.split())
 # load training data
-train_docs, ytrain = load_clean_dataset(vocab, True)
+train_docs, ytrain = get_train_data()
+# train_docs, ytrain = load_clean_dataset(vocab, True)
+# test_docs, ytest = load_clean_dataset(vocab, False)
 # create the tokenizer
 tokenizer = create_tokenizer(train_docs)
 # define vocabulary size
@@ -126,11 +167,35 @@ max_length = max([len(s.split()) for s in train_docs])
 print('Maximum length: %d' % max_length)
 # encode data
 Xtrain = encode_docs(tokenizer, max_length, train_docs)
+
+# tokenizer = create_tokenizer(test_docs)
+# Xtest = encode_docs(tokenizer, max_length, test_docs)
 # define model
 model = define_model(vocab_size, max_length)
 # fit network
-model.fit(Xtrain, ytrain, epochs=10, verbose=2)
+history = model.fit(Xtrain, ytrain, validation_split=0.25, epochs=10, verbose=2)
 # save the model
 model.save('worst_case.h5')
+
+# Plot training & validation accuracy values
+plt.plot(history.history['acc'])
+plt.plot(history.history['val_acc'])
+plt.title('Model accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.savefig('acc_result_cnn_lstm.png')
+plt.clf()
+
+# Plot training & validation loss values
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'], loc='upper left')
+plt.savefig('loss_result_cnn_lstm.png')
+plt.clf()
+K.clear_session()
 
 
